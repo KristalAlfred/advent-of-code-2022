@@ -5,16 +5,16 @@ use std::{
 
 fn main() {
     let calories = parse_calories("input.txt");
-    println!("Single most calories: {:?}", top_three(&calories).iter().max().unwrap());
-    println!("Top three elves summed: {:?}", top_three(&calories).iter().sum::<u32>());
+    println!("Single most calories: {:?}", calories.iter().max().unwrap());
+    println!("Top three elves summed: {:?}", top_three(calories).iter().sum::<u32>());
 }
 
-fn top_three(vec: &Vec<u32>) -> Vec<u32> {
+fn top_three(vec: Vec<u32>) -> Vec<u32> {
     let mut result = vec![u32::MIN; 3];
     for value in vec {
         let i = find_smallest_index(&result);
-        if value > &result[i] {
-            result[i] = *value;
+        if value > result[i] {
+            result[i] = value;
         }
     }
 
