@@ -1,7 +1,7 @@
 fn main() {
     let file = std::fs::read_to_string("data.txt");
     if let Ok(contents) = file {
-        let vec: u32 = contents
+        let result: u32 = contents
             .split("\n")
             .map(|str| {
                 str.chars()
@@ -15,7 +15,7 @@ fn main() {
                     })
             })
             .sum();
-        println!("{:?}", vec);
+        println!("{:?}", result);
     }
 }
 
