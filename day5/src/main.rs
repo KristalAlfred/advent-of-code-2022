@@ -22,28 +22,43 @@ fn main() {
             .filter(|str| !str.is_empty())
             .collect::<Vec<_>>()
             .chunks(3)
-            .for_each(|chunk| {
-                let crates_to_move = chunk[0].parse::<u32>().unwrap();
-                let from_container = chunk[1].parse::<u32>().unwrap() - 1;
-                let to_container = chunk[2].parse::<u32>().unwrap() - 1;
-
-                println!(
-                    "Moving {crates_to_move} from container {from_container} to {to_container}"
-                );
-                if from_container == to_container {
-                    return;
-                }
-
-                for _ in 0..crates_to_move {
-                    let container = containers[from_container as usize].pop();
-                    if let Some(container) = container {
-                        containers[to_container as usize].push(container);
-                    }
-                }
-            });
+            .for_each(|instructions| part2(instructions, &mut containers));
     }
-    
+
     for container in containers {
         println!("{:?}", container);
     }
+}
+
+fn part1(instructions: &[&str], containers: &mut Vec<Vec<&str>>) {
+    let containers_to_move = instructions[0].parse::<usize>().unwrap();
+    let from_container = instructions[1].parse::<usize>().unwrap() - 1;
+    let to_container = instructions[2].parse::<usize>().unwrap() - 1;
+
+    if from_container == to_container {
+        return;
+    }
+
+    for _ in 0..containers_to_move {
+        let container = containers[from_container].pop();
+        if let Some(container) = container {
+            containers[to_container].push(container);
+        }
+    }
+}
+
+fn part2(instructions: &[&str], containers: &mut Vec<Vec<&str>>) {
+    let containers_to_move = instructions[0].parse::<usize>().unwrap();
+    let from_container = instructions[1].parse::<usize>().unwrap() - 1;
+    let to_container = instructions[2].parse::<usize>().unwrap() - 1;
+
+    if from_container == to_container {
+        return;
+    }
+
+    let len = containers[from_container].len();
+    let mut tmp = containers[from_container]
+        .drain(len - containers_to_move..)
+        .collect::<Vec<_>>();
+    containers[to_container].append(&mut tmp);
 }
