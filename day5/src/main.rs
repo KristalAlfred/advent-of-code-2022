@@ -22,12 +22,12 @@ fn main() {
             .filter(|str| !str.is_empty())
             .collect::<Vec<_>>()
             .chunks(3)
-            .for_each(|instructions| part2(instructions, &mut containers));
+            .for_each(|instructions| {
+                part1(instructions, &mut containers);
+                //part2(instructions, &mut containers);
+            });
     }
-
-    for container in containers {
-        println!("{:?}", container);
-    }
+    print_results(&containers);
 }
 
 fn part1(instructions: &[&str], containers: &mut Vec<Vec<&str>>) {
@@ -61,4 +61,12 @@ fn part2(instructions: &[&str], containers: &mut Vec<Vec<&str>>) {
         .drain(len - containers_to_move..)
         .collect::<Vec<_>>();
     containers[to_container].append(&mut tmp);
+}
+
+fn print_results(containers: &Vec<Vec<&str>>) {
+    print!("Results: ");
+    for container in containers {
+        print!("{}", container[container.len() - 1]);
+    }
+    println!("");
 }
