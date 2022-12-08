@@ -6,18 +6,19 @@ fn main() {
     if let Ok(contents) = file {
         let grid = convert_to_grid(contents);
 
-        let result = get_visibility_grid(&grid).iter().flatten().fold(0, |mut acc, &bool| {
-            if bool { acc += 1 }
-            acc
-        });
-        println!("Trees visible from the outside: {result}")
+        let mut visible_trees = 0;
+        let mut highest_scenic_score = 0;
+        for &(visible, scenic_score) in get_visibility_grid(&grid).iter().flatten() {
+            visible_trees += if visible { 1 } else { 0 };
+            highest_scenic_score = std::cmp::max(scenic_score, highest_scenic_score);
+        }
+        println!("Trees visible from the outside: {visible_trees}");
+        println!("Maximum scenic score: {highest_scenic_score}");
     }
 }
 
-fn get_visibility_grid(grid: &Vec<Vec<u32>>) -> Vec<Vec<bool>> {
-    let mut visibility_grid = vec![vec![true; grid.len()]; grid.len()];
-
-    let mut maximum_scenic_score = 0;
+fn get_visibility_grid(grid: &Vec<Vec<u32>>) -> Vec<Vec<(bool, i32)>> {
+    let mut visibility_grid = vec![vec![(true, 0); grid.len()]; grid.len()];
 
     for (row_number, row) in grid.iter().enumerate() {
         for (column_number, &cell_value) in row.iter().enumerate() {
@@ -76,11 +77,9 @@ fn get_visibility_grid(grid: &Vec<Vec<u32>>) -> Vec<Vec<bool>> {
                     _ => unreachable!()
                 }
             }
-            visibility_grid[column_number][row_number] = directional_visibility.iter().any(|&b| b);
-            maximum_scenic_score = std::cmp::max(scenic_score, maximum_scenic_score);
+            visibility_grid[column_number][row_number] = (directional_visibility.iter().any(|&b| b), scenic_score);
         }
     }
-    println!("Maximum scenic score: {maximum_scenic_score}");
 
     visibility_grid
 }
