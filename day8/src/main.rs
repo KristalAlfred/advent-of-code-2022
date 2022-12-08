@@ -22,17 +22,8 @@ fn get_visibility_grid(grid: &Vec<Vec<u32>>) -> Vec<Vec<bool>> {
     for (row_number, row) in grid.iter().enumerate() {
         for (column_number, &cell_value) in row.iter().enumerate() {
             let mut scenic_score = 1;
-
-            // All trees are visible at the edges
-            if row_number == 0
-                || row_number == grid.len() - 1
-                || column_number == 0
-                || column_number == grid.len() - 1
-            {
-                continue;
-            }
-
             let mut visible_in_any_direction = [true, true, true, true];
+
             for dir in 0..4 {
                 let mut local_scenic_score = 0;
                 match dir {
@@ -61,7 +52,6 @@ fn get_visibility_grid(grid: &Vec<Vec<u32>>) -> Vec<Vec<bool>> {
                     },
                     2 => {
                         // Check south
-                        
                         for position in row_number..grid.len() {
                             if position == row_number { continue; }
                             local_scenic_score += 1;
