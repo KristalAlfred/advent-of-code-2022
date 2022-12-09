@@ -5,9 +5,12 @@ fn main() {
 
     let mut visited_positions: HashSet<(u32, u32)> = HashSet::new();
     let starting_pos = (u32::MAX / 2, u32::MAX / 2);
+    visited_positions.insert(starting_pos);
+
     let mut head_pos = starting_pos;
     let mut tail_pos = starting_pos;
-    visited_positions.insert(starting_pos);
+
+    let mut rope = vec![starting_pos; 10];
 
     if let Ok(contents) = file {
         for ele in contents.split('\n') {
@@ -93,6 +96,16 @@ fn update_tail_pos(head_position: (u32, u32), tail_position: (u32, u32)) -> (u32
         std::cmp::Ordering::Less => {
             new_tail_position.1 = tail_y - 1;
         }
+    }
+
+    new_tail_position
+}
+
+fn update_rope_pos(rope: Vec<(u32, u32)>) -> (u32, u32) {
+    let mut new_tail_position = (0, 0);
+
+    for i in 1..rope.len() {
+        new_tail_position = update_tail_pos(rope[i - 1], rope[i]);
     }
 
     new_tail_position
