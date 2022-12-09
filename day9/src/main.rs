@@ -7,53 +7,27 @@ fn main() {
     let starting_pos = (u32::MAX / 2, u32::MAX / 2);
     visited_positions.insert(starting_pos);
 
-    let mut head_pos = starting_pos;
-    let mut tail_pos = starting_pos;
-
-    let mut rope = vec![starting_pos; 10];
+    // Change rope length here to solve the different parts!
+    let rope_len = 10;
+    let mut rope = vec![starting_pos; rope_len];
 
     if let Ok(contents) = file {
         for ele in contents.split('\n') {
             let vec = ele.split_whitespace().collect::<Vec<_>>();
             let steps = vec[1].parse::<u32>().unwrap();
-            match vec[0] {
-                "R" => {
-                    for _ in 0..steps {
-                        let (mut head_x, head_y) = head_pos;
-                        head_x += 1;
-                        head_pos = (head_x, head_y);
-                        tail_pos = update_tail_pos(head_pos, tail_pos);
-                        visited_positions.insert(tail_pos);
-                    }
+
+            for _ in 0..steps {
+                let (head_x, head_y) = &mut rope[0];
+                match vec[0] {
+                    "R" => *head_x += 1,
+                    "L" => *head_x -= 1,
+                    "U" => *head_y += 1,
+                    "D" => *head_y -= 1,
+                    _ => unreachable!("Malformed data!"),
                 }
-                "L" => {
-                    for _ in 0..steps {
-                        let (mut head_x, head_y) = head_pos;
-                        head_x -= 1;
-                        head_pos = (head_x, head_y);
-                        tail_pos = update_tail_pos(head_pos, tail_pos);
-                        visited_positions.insert(tail_pos);
-                    }
-                }
-                "U" => {
-                    for _ in 0..steps {
-                        let (head_x, mut head_y) = head_pos;
-                        head_y += 1;
-                        head_pos = (head_x, head_y);
-                        tail_pos = update_tail_pos(head_pos, tail_pos);
-                        visited_positions.insert(tail_pos);
-                    }
-                }
-                "D" => {
-                    for _ in 0..steps {
-                        let (head_x, mut head_y) = head_pos;
-                        head_y -= 1;
-                        head_pos = (head_x, head_y);
-                        tail_pos = update_tail_pos(head_pos, tail_pos);
-                        visited_positions.insert(tail_pos);
-                    }
-                }
-                _ => unreachable!("Malformed data!"),
+                rope[0] = (*head_x, *head_y);
+
+                visited_positions.insert(update_rope_pos(&mut rope));
             }
         }
     }
@@ -101,12 +75,11 @@ fn update_tail_pos(head_position: (u32, u32), tail_position: (u32, u32)) -> (u32
     new_tail_position
 }
 
-fn update_rope_pos(rope: Vec<(u32, u32)>) -> (u32, u32) {
-    let mut new_tail_position = (0, 0);
+fn update_rope_pos(rope: &mut Vec<(u32, u32)>) -> (u32, u32) {
 
     for i in 1..rope.len() {
-        new_tail_position = update_tail_pos(rope[i - 1], rope[i]);
+        rope[i] = update_tail_pos(rope[i - 1], rope[i]);
     }
 
-    new_tail_position
+    rope[rope.len() - 1]
 }
