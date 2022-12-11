@@ -71,7 +71,6 @@ fn part2() {
     let space_needed_for_upgrade = 30_000_000;
     let mut level_counts = vec![];
     let mut total_file_size = 0;
-    let mut unused_space = 0;
     let mut closest_dir_size: u64 = u32::MAX as u64;
 
     let data = read_to_string("data.txt");
@@ -92,7 +91,7 @@ fn part2() {
         }
     }
 
-    unused_space = total_space_available - total_file_size;
+    let unused_space = total_space_available - total_file_size;
 
     let data = read_to_string("data.txt");
     if let Ok(contents) = data {
