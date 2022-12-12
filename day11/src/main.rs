@@ -12,6 +12,8 @@ fn main() {
     let monkeys: Vec<Monkey> = vec![];
 
     if let Ok(content) = file {
+
+        // Parsing monkeys
         for monkey in content.split("\n\n") {
             println!("NEW MONKEY!");
             println!("{}", monkey);
@@ -42,11 +44,15 @@ fn main() {
 
                 },
             );
-            
+
             let test_divisble_by = captures.get(3).unwrap();
             let if_true_pass_to = captures.get(4).unwrap();
             let if_false_pass_to = captures.get(5).unwrap();
         }
+
+        // Do the rounds:
+        //  1. Find the two most active monkeys
+        //  2. Multiply their respective amount of inspections to get result!
     }
 }
 
