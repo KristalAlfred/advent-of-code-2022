@@ -96,8 +96,7 @@ fn get_monkey_business(monkeys: &Vec<Monkey>, rounds: u32) -> u128 {
     let modulo: u32 = monkeys.iter().map(|m| m.div).product();
 
     let mut inspection_count = vec![0; monkeys.len()];
-        for round in 0..rounds {
-            println!("On round {round}");
+        for _ in 0..rounds {
             for (i, monkey) in monkeys.iter().enumerate() {
                 let len;
                 {
