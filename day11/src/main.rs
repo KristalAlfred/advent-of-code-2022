@@ -5,12 +5,13 @@ struct Monkey {
     items: RefCell<VecDeque<u128>>,
     operation: Box<dyn Fn(&mut u128) -> u128>,
     test_divisible_by: Box<dyn Fn(u128) -> u128>,
+    div: u32
 }
 
 impl Monkey {
     fn handle_item(&self) -> (u128, u128) {
         if let Some(mut item) = self.items.borrow_mut().pop_front() {
-            let item = (self.operation)(&mut item) / 3; // divide by three for part 1!
+            let item = (self.operation)(&mut item); // divide by three for part 1!
             return ((self.test_divisible_by)(item), item);
         } else {
             panic!("Tried handling an item that doesn't exist.");
@@ -26,7 +27,7 @@ fn main() {
         let monkeys: Vec<Monkey> = parse_monkeys(content);
 
         // Do the rounds:
-        let rounds = 20;
+        let rounds = 10000;
         println!("Monkey business for {rounds} rounds is: {}", get_monkey_business(&monkeys, rounds));
     }
 }
@@ -76,21 +77,27 @@ fn parse_monkeys(unparsed_data: String) -> Vec<Monkey> {
         let if_true_pass_to = captures.get(4).unwrap().as_str().parse::<u128>().unwrap();
         let if_false_pass_to = captures.get(5).unwrap().as_str().parse::<u128>().unwrap();
 
+        let div = captures.get(3).unwrap().as_str().parse::<u32>().unwrap();
+
         let test_divisible_by: Box<dyn Fn(u128) -> u128> = captures.get(3)
             .map_or(Box::new(|_| 0), |m| {
                 let digit = m.as_str().parse::<u128>().unwrap();
                 return Box::new(move |i| if i % digit == 0 { if_true_pass_to } else { if_false_pass_to });
             });
 
-        monkeys.push(Monkey{ items: RefCell::new(starting_items), operation, test_divisible_by })
+        monkeys.push(Monkey{ items: RefCell::new(starting_items), operation, test_divisible_by, div })
     }
 
     monkeys
 }
 
 fn get_monkey_business(monkeys: &Vec<Monkey>, rounds: u32) -> u128 {
+
+    let modulo: u32 = monkeys.iter().map(|m| m.div).product();
+
     let mut inspection_count = vec![0; monkeys.len()];
-        for _ in 0..rounds {
+        for round in 0..rounds {
+            println!("On round {round}");
             for (i, monkey) in monkeys.iter().enumerate() {
                 let len;
                 {
@@ -99,7 +106,7 @@ fn get_monkey_business(monkeys: &Vec<Monkey>, rounds: u32) -> u128 {
                 for _ in 0..len {
                     let (destination, item) = monkey.handle_item();
                     {
-                        monkeys[destination as usize].items.borrow_mut().push_back(item);
+                        monkeys[destination as usize].items.borrow_mut().push_back(item % modulo as u128);
                     }
                     inspection_count[i] += 1;
                 }
