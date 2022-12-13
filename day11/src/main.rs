@@ -2,16 +2,16 @@ use regex::Regex;
 use std::{fs::read_to_string, cell::RefCell, collections::VecDeque};
 
 struct Monkey {
-    items: RefCell<VecDeque<i32>>,
-    operation: Box<dyn Fn(i32) -> i32>,
-    test_divisible_by: Box<dyn Fn(i32) -> i32>,
-    inspected_items: u32
+    items: RefCell<VecDeque<u128>>,
+    operation: Box<dyn Fn(&mut u128) -> u128>,
+    test_divisible_by: Box<dyn Fn(u128) -> u128>,
 }
 
 impl Monkey {
-    fn handle_item(&self) -> i32 {
-        if let Some(item) = self.items.borrow_mut().pop_front() {
-            return (self.test_divisible_by)((self.operation)(item) / 3);
+    fn handle_item(&self) -> (u128, u128) {
+        if let Some(mut item) = self.items.borrow_mut().pop_front() {
+            let item = (self.operation)(&mut item) / 3; // divide by three for part 1!
+            return ((self.test_divisible_by)(item), item);
         } else {
             panic!("Tried handling an item that doesn't exist.");
         }
@@ -23,30 +23,11 @@ fn main() {
     
     if let Ok(content) = file {
         // Parsing monkeys
-        let mut monkeys: Vec<Monkey> = parse_monkeys(content);
+        let monkeys: Vec<Monkey> = parse_monkeys(content);
 
         // Do the rounds:
-        for _ in 0..20 {
-            for monkey in &mut monkeys {
-
-                let mut len = 0;
-
-                {
-                    len = monkey.items.borrow().len().clone();
-                }
-
-                for _ in 0..len {
-                    monkey.handle_item();
-                    monkey.inspected_items += 1;
-                }
-            }
-        }
-
-        for monkey in monkeys {
-            println!("{}", monkey.inspected_items);
-        }
-        //  1. Find the two most active monkeys
-        //  2. Multiply their respective amount of inspections to get result!
+        let rounds = 20;
+        println!("Monkey business for {rounds} rounds is: {}", get_monkey_business(&monkeys, rounds));
     }
 }
 
@@ -54,7 +35,6 @@ fn parse_monkeys(unparsed_data: String) -> Vec<Monkey> {
     let mut monkeys: Vec<Monkey> = vec![];
 
     for monkey in unparsed_data.split("\n\n") {
-        println!("{}", monkey);
         let re = Regex::new(r"Starting items: (.*)\n.*Operation: new = old (.*)\n.*Test: divisible by (.*)\n.*monkey (\d)\n.*monkey (\d)").unwrap();
         let captures = re.captures(monkey).unwrap();
 
@@ -62,39 +42,88 @@ fn parse_monkeys(unparsed_data: String) -> Vec<Monkey> {
             m.as_str()
                 .split(", ")
                 .map(|digit| {
-                    digit.parse::<i32>().unwrap()
+                    digit.parse::<u128>().unwrap()
                 })
-                .collect::<VecDeque<i32>>()
+                .collect::<VecDeque<u128>>()
         });
 
-        let operation: Box<dyn Fn(i32) -> i32> = captures.get(2).map_or(Box::new(|i| i), |m| {
+        let operation: Box<dyn Fn(&mut u128) -> u128> = captures.get(2).map_or(Box::new(|i| i.clone()), |m| {
             let parts = m.as_str().split_whitespace().collect::<Vec<&str>>();
-            if let Ok(digit) = parts[1].parse::<i32>() {
+            if let Ok(digit) = parts[1].parse::<u128>() {
                 match parts[0] {
                     "*" => {
-                        return Box::new(move |i| i * digit);
+                        return Box::new(move |i| { 
+                            *i = *i * digit; 
+                            i.clone() 
+                        });
                     }
                     "+" => {
-                        return Box::new(move |i| i * digit);
+                        return Box::new(move |i| { 
+                            *i = *i + digit; 
+                            i.clone() 
+                        });
                     }
                     _ => unreachable!("Malformed data"),
                 }
             } else {
-                return Box::new(|i| i * i);
+                return Box::new(|i| {
+                    *i = (*i) * (*i); 
+                    i.clone()
+                });
             }
         });
 
-        let if_true_pass_to = captures.get(4).unwrap().as_str().parse::<i32>().unwrap();
-        let if_false_pass_to = captures.get(5).unwrap().as_str().parse::<i32>().unwrap();
+        let if_true_pass_to = captures.get(4).unwrap().as_str().parse::<u128>().unwrap();
+        let if_false_pass_to = captures.get(5).unwrap().as_str().parse::<u128>().unwrap();
 
-        let test_divisible_by: Box<dyn Fn(i32) -> i32> = captures.get(3)
+        let test_divisible_by: Box<dyn Fn(u128) -> u128> = captures.get(3)
             .map_or(Box::new(|_| 0), |m| {
-                let digit = m.as_str().parse::<i32>().unwrap();
+                let digit = m.as_str().parse::<u128>().unwrap();
                 return Box::new(move |i| if i % digit == 0 { if_true_pass_to } else { if_false_pass_to });
             });
 
-        monkeys.push(Monkey{ items: RefCell::new(starting_items), operation, test_divisible_by, inspected_items: 0 })
+        monkeys.push(Monkey{ items: RefCell::new(starting_items), operation, test_divisible_by })
     }
 
     monkeys
+}
+
+fn get_monkey_business(monkeys: &Vec<Monkey>, rounds: u32) -> u128 {
+    let mut inspection_count = vec![0; monkeys.len()];
+        for _ in 0..rounds {
+            for (i, monkey) in monkeys.iter().enumerate() {
+                let len;
+                {
+                    len = monkey.items.borrow().len().clone();
+                }
+                for _ in 0..len {
+                    let (destination, item) = monkey.handle_item();
+                    {
+                        monkeys[destination as usize].items.borrow_mut().push_back(item);
+                    }
+                    inspection_count[i] += 1;
+                }
+            }
+        }
+
+        let two_highest = get_two_highest(inspection_count);
+        two_highest.iter().fold(1, |acc, value| acc * *value)
+}
+
+fn get_two_highest(vec: Vec<u128>) -> [u128; 2] {
+    let mut vec = vec.clone();
+    let mut two_highest = [0; 2];
+    for i in 0..2 {
+        let mut highest_index = 0;
+        let mut highest = 0;
+        for (idx, count) in vec.iter().enumerate() {
+            if *count > highest {
+                highest = count.clone();
+                highest_index = idx;
+            }
+        }
+        two_highest[i] = highest;
+        vec.remove(highest_index);
+    }
+    two_highest
 }
